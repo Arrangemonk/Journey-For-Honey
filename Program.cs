@@ -1,5 +1,7 @@
 ﻿using System.ComponentModel;
 using System.Numerics;
+using System.Reflection;
+using System.Reflection.PortableExecutable;
 using Raylib_cs;
 using static Raylib_cs.Raylib;
 namespace Search_for_Honey;
@@ -29,11 +31,13 @@ public class Program
     private static Texture2D clouds3;
     private static Texture2D gameoverscreen;
     private static Texture2D title;
+    private static Texture2D logo1;
     private static Sound jump;
     private static Sound hurt;
     private static Sound grow;
     private static Sound kaching;
     private static Sound ending;
+    private static Sound logo;
     private static Music stagemusic;
     private static Music menu;
     private static float oldx = 0;
@@ -43,8 +47,14 @@ public class Program
     private const float Height = 600;
     private static RenderTexture2D rtex;
     private static Font font;
+    private static Font opensans;
     private static int cooldown;
     private static bool smol;
+
+    public static float Smoothstep(float x)
+    {
+        return x* x*(3 - 2 * x);
+    }
     public static void Main()
     {
         
@@ -65,20 +75,25 @@ public class Program
         clouds1 = LoadTexture(Path.Combine(Resource1.images, "clouds1.png"));
         clouds2 = LoadTexture(Path.Combine(Resource1.images, "clouds2.png"));
         clouds3 = LoadTexture(Path.Combine(Resource1.images, "clouds3.png"));
+        logo1 = LoadTexture(Path.Combine(Resource1.images, "logo.png"));
         jump = LoadSound(Path.Combine(Resource1.audio,"jump.mp3"));
         hurt = LoadSound(Path.Combine(Resource1.audio, "hurt.mp3"));
         grow = LoadSound(Path.Combine(Resource1.audio, "grow.mp3"));
         kaching = LoadSound(Path.Combine(Resource1.audio, "kaching.mp3"));
         ending = LoadSound(Path.Combine(Resource1.audio, "ending.mp3"));
+        logo = LoadSound(Path.Combine(Resource1.audio, "logo.mp3"));
         stagemusic = LoadMusicStream(Path.Combine(Resource1.audio, "stage.mp3"));
         menu = LoadMusicStream(Path.Combine(Resource1.audio, "bgm.mp3"));
         wheight = wall.height;
         columnspan = (int)((Width + 2 * wall.width) / Columncount);
         rtex = LoadRenderTexture((int)Width, (int)Width);
         font = LoadFontEx(Resource1.font, 115, null, 0);
+        opensans = LoadFontEx(Resource1.opensans, 55, null, 0);
         GenTextureMipmaps(ref font.texture);
         SetTextureFilter(font.texture, TextureFilter.TEXTURE_FILTER_BILINEAR);
-        gamestate = 0;
+        GenTextureMipmaps(ref opensans.texture);
+        SetTextureFilter(opensans.texture, TextureFilter.TEXTURE_FILTER_BILINEAR);
+        gamestate = 4;
 
         var bgcolor = new Color(178, 198, 255, 255);
         Reset();
@@ -99,10 +114,13 @@ public class Program
                 case 2:
                     End();
                     break;
+                case 4:
+                    Logo();
+                    break;
             }
             EndTextureMode();
             BeginDrawing();
-            ClearBackground(bgcolor);
+            ClearBackground(gamestate == 4 ? Color.BLACK : bgcolor);
             if (IsKeyPressed(KeyboardKey.KEY_ENTER))
             {
                 if (IsWindowFullscreen())
@@ -139,15 +157,43 @@ public class Program
         UnloadTexture(clouds1);
         UnloadTexture(clouds2);
         UnloadTexture(clouds3);
+        UnloadTexture(logo1);
         UnloadMusicStream(stagemusic);
         UnloadMusicStream(menu);
         UnloadSound(ending);
         UnloadSound(jump);
         UnloadSound(hurt);
         UnloadSound(grow);
+        UnloadSound(logo);
         UnloadSound(kaching);
         UnloadRenderTexture(rtex);
         UnloadFont(font);
+        UnloadFont(opensans);
+    }
+
+    private static void Logo()
+    {
+        if (360 < timer)
+            gamestate = 0;
+
+        if (timer == 0)
+            PlaySound(logo);
+
+            ClearBackground(timer < 120 || 240 < timer ? Color.BLACK : Color.WHITE);
+
+        timer++;  
+        var fract = Smoothstep(MathF.Min(1f, MathF.Max(0f, timer / 120f)));
+        var fract2 = Smoothstep(MathF.Min(1f, MathF.Max(0f, (timer - 120) / 120f)));
+        var fade = Smoothstep(MathF.Min(1f,MathF.Max(0f,(360f - timer) / 120)));
+
+        var startposx = Width / 2 - logo1.width / 2;
+        var startposy = Height/ 2 - logo1.height / 2;
+        var color = new Color(255, 255, 255, (int)(255*fract * fade));
+        var color2 = new Color(203, 206, 249, (int)(255 * fract2 * fade));
+
+        Raylib.DrawTexture(logo1,(int) startposx,(int) startposy, color);
+        DrawTextEx(opensans , Resource1.Presents, new Vector2((int)(Width / 2 - MeasureTextEx(font, Resource1.Presents, 55, 0).X / 2), (int)(Height * 0.70f)), 55, 0, color2);
+
     }
     private static void Start()
     {
@@ -191,6 +237,7 @@ public class Program
 
     private static void End()
     {
+        smol = false;
         if (IsKeyPressed(KeyboardKey.KEY_R))
         {
             StopMusicStream(stagemusic);

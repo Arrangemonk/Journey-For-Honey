@@ -129,6 +129,12 @@
   <data name="MaxScore" xml:space="preserve">
     <value>HighScore: {0}</value>
   </data>
+  <data name="opensans" xml:space="preserve">
+    <value>resources/OpenSans.ttf</value>
+  </data>
+  <data name="Presents" xml:space="preserve">
+    <value>Presents</value>
+  </data>
   <data name="PressBToReturnToMenu" xml:space="preserve">
     <value>Press "B" to return to Menu</value>
   </data>
