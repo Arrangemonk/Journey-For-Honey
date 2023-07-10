@@ -10,3 +10,9 @@ https://comicneue.com/
 
 ## Artwork is under CC-BY-NC-ND Licence
 
+except for the sky background, thats from:
+
+https://harbingersolution.itch.io/snowy-mountains-parallax-background
+
+and apparently CC0
+
